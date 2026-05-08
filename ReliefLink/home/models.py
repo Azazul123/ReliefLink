@@ -1,5 +1,5 @@
 # home/models.py
-import json, math
+import math
 from django.db import models
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
@@ -35,179 +35,83 @@ class CustomUserManager(BaseUserManager):
 
 class Division(models.Model):
     name = models.CharField(max_length=100)
-    floody_districts = models.TextField(default='[]')
-    
     dry_food_demand = models.IntegerField(default=0)
     primary_food_demand = models.IntegerField(default=0)
-
     dry_food_supply = models.IntegerField(default=0)
     primary_food_supply = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
 
-    def add_floody_district(self, district_id):
-        floody_districts = self.get_floody_districts()
-        if district_id not in floody_districts:
-            floody_districts.append(district_id)
-            self.set_floody_districts(floody_districts)
-            self.update_relief_demand()
-        else:
-            self.update_relief_demand()
-
-
-    def remove_floody_district(self, district_id):
-        floody_districts = self.get_floody_districts()
-        if district_id in floody_districts:
-            floody_districts.remove(district_id)
-            self.set_floody_districts(floody_districts)
-            self.update_relief_demand()
-        
-
     def update_relief_demand(self):
-        """Recalculates relief demand based on current floody wards."""
-        floody_districts = self.get_floody_districts()
-        self.dry_food_demand = District.objects.filter(id__in=floody_districts).aggregate(Sum('dry_food_demand'))['dry_food_demand__sum'] or 0
-
-        self.primary_food_demand = District.objects.filter(id__in=floody_districts).aggregate(Sum('primary_food_demand'))['primary_food_demand__sum'] or 0
-
-        self.dry_food_supply = District.objects.filter(id__in=floody_districts).aggregate(Sum('dry_food_supply'))['dry_food_supply__sum'] or 0
-
-        self.primary_food_supply = District.objects.filter(id__in=floody_districts).aggregate(Sum('primary_food_supply'))['primary_food_supply__sum'] or 0
-
-        self.save()
-
-    def get_floody_districts(self):
-        try:
-            return json.loads(self.floody_districts)
-        except json.JSONDecodeError:
-            return []
-
-    def set_floody_districts(self, district_ids):
-        self.floody_districts = json.dumps(district_ids)
+        flooded = Ward.objects.filter(union__upazila__district__division=self, is_flood=True)
+        agg = flooded.aggregate(
+            dry_demand=Sum('dry_food_demand'),
+            primary_demand=Sum('primary_food_demand'),
+            dry_supply=Sum('dry_food_supply'),
+            primary_supply=Sum('primary_food_supply'),
+        )
+        self.dry_food_demand = agg['dry_demand'] or 0
+        self.primary_food_demand = agg['primary_demand'] or 0
+        self.dry_food_supply = agg['dry_supply'] or 0
+        self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
 
 class District(models.Model):
     name = models.CharField(max_length=100)
     division = models.ForeignKey(Division, on_delete=models.CASCADE)
-    floody_upazilas = models.TextField(default='[]')
-
     dry_food_demand = models.IntegerField(default=0)
     primary_food_demand = models.IntegerField(default=0)
-
     dry_food_supply = models.IntegerField(default=0)
     primary_food_supply = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
 
-    def add_floody_upazila(self, upazila_id):
-        floody_upazilas = self.get_floody_upazilas()
-        if upazila_id not in floody_upazilas:
-            floody_upazilas.append(upazila_id)
-            self.set_floody_upazilas(floody_upazilas)
-            self.update_relief_demand()
-            self.division.add_floody_district(self.id)
-        else:
-            self.update_relief_demand()
-            self.division.add_floody_district(self.id)
-
-
-    def remove_floody_upazila(self, upazila_id):
-        floody_upazilas = self.get_floody_upazilas()
-        if upazila_id in floody_upazilas:
-            floody_upazilas.remove(upazila_id)
-            self.set_floody_upazilas(floody_upazilas)
-            self.update_relief_demand()
-            self.division.remove_floody_district(self.id)
-
-    
     def update_relief_demand(self):
-        """Recalculates relief demand based on current floody wards."""
-        floody_upazilas = self.get_floody_upazilas()
-        self.dry_food_demand = Upazila.objects.filter(id__in=floody_upazilas).aggregate(Sum('dry_food_demand'))['dry_food_demand__sum'] or 0
-
-        self.primary_food_demand = Upazila.objects.filter(id__in=floody_upazilas).aggregate(Sum('primary_food_demand'))['primary_food_demand__sum'] or 0
-
-        self.dry_food_supply = Upazila.objects.filter(id__in=floody_upazilas).aggregate(Sum('dry_food_supply'))['dry_food_supply__sum'] or 0
-
-        self.primary_food_supply = Upazila.objects.filter(id__in=floody_upazilas).aggregate(Sum('primary_food_supply'))['primary_food_supply__sum'] or 0
+        flooded = Ward.objects.filter(union__upazila__district=self, is_flood=True)
+        agg = flooded.aggregate(
+            dry_demand=Sum('dry_food_demand'),
+            primary_demand=Sum('primary_food_demand'),
+            dry_supply=Sum('dry_food_supply'),
+            primary_supply=Sum('primary_food_supply'),
+        )
+        self.dry_food_demand = agg['dry_demand'] or 0
+        self.primary_food_demand = agg['primary_demand'] or 0
+        self.dry_food_supply = agg['dry_supply'] or 0
+        self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
-
-    def get_floody_upazilas(self):
-        try:
-            return json.loads(self.floody_upazilas)
-        except json.JSONDecodeError:
-            return []
-
-    def set_floody_upazilas(self, upazila_ids):
-        self.floody_upazilas = json.dumps(upazila_ids)
-        self.save()
+        self.division.update_relief_demand()
 
 class Upazila(models.Model):
     name = models.CharField(max_length=100)
     district = models.ForeignKey(District, on_delete=models.CASCADE)
-    floody_unions = models.TextField(default='[]')
-
     dry_food_demand = models.IntegerField(default=0)
     primary_food_demand = models.IntegerField(default=0)
-
     dry_food_supply = models.IntegerField(default=0)
     primary_food_supply = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
 
-    def add_floody_union(self, union_id):
-        floody_unions = self.get_floody_unions()
-        
-        if union_id not in floody_unions:
-            floody_unions.append(union_id)
-            self.set_floody_unions(floody_unions)
-            self.update_relief_demand()
-            self.district.add_floody_upazila(self.id)
-        else:
-            self.update_relief_demand()
-            self.district.add_floody_upazila(self.id)
-
-        
-    def remove_floody_union(self, union_id):
-        floody_unions = self.get_floody_unions()
-        if union_id in floody_unions:
-            floody_unions.remove(union_id)
-            self.set_floody_unions(floody_unions)
-            self.update_relief_demand()
-            self.district.remove_floody_upazila(self.id)
-        
-
     def update_relief_demand(self):
-        floody_unions = self.get_floody_unions()
-
-        self.dry_food_demand = Union.objects.filter(id__in=floody_unions).aggregate(Sum('dry_food_demand'))['dry_food_demand__sum'] or 0
-
-        self.primary_food_demand = Union.objects.filter(id__in=floody_unions).aggregate(Sum('primary_food_demand'))['primary_food_demand__sum'] or 0
-
-        self.dry_food_supply = Union.objects.filter(id__in=floody_unions).aggregate(Sum('dry_food_supply'))['dry_food_supply__sum'] or 0
-
-        self.primary_food_supply = Union.objects.filter(id__in=floody_unions).aggregate(Sum('primary_food_supply'))['primary_food_supply__sum'] or 0
-        
+        flooded = Ward.objects.filter(union__upazila=self, is_flood=True)
+        agg = flooded.aggregate(
+            dry_demand=Sum('dry_food_demand'),
+            primary_demand=Sum('primary_food_demand'),
+            dry_supply=Sum('dry_food_supply'),
+            primary_supply=Sum('primary_food_supply'),
+        )
+        self.dry_food_demand = agg['dry_demand'] or 0
+        self.primary_food_demand = agg['primary_demand'] or 0
+        self.dry_food_supply = agg['dry_supply'] or 0
+        self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
-        
-
-    def get_floody_unions(self):
-        try:
-            return json.loads(self.floody_unions)
-        except json.JSONDecodeError:
-            return []
-
-    def set_floody_unions(self, union_ids):
-        self.floody_unions = json.dumps(union_ids)
-        self.save()
+        self.district.update_relief_demand()
 
 class Union(models.Model):
     name = models.CharField(max_length=100)
     upazila = models.ForeignKey(Upazila, on_delete=models.CASCADE)
-    floody_wards = models.TextField(default='[]')
     dry_food_demand = models.IntegerField(default=0)
     primary_food_demand = models.IntegerField(default=0)
     dry_food_supply = models.IntegerField(default=0)
@@ -216,52 +120,20 @@ class Union(models.Model):
     def __str__(self):
         return self.name
 
-    def add_floody_ward(self, ward_id):
-        floody_wards = self.get_floody_wards()
-        if ward_id not in floody_wards:
-            floody_wards.append(ward_id)
-            self.set_floody_wards(floody_wards)
-            self.update_relief_demand()
-            self.upazila.add_floody_union(self.id)
-        else:
-            # print("cole")
-            self.update_relief_demand()
-            self.upazila.add_floody_union(self.id)
-        
-
-
-    def remove_floody_ward(self, ward_id):
-        floody_wards = self.get_floody_wards()
-        if ward_id in floody_wards:
-            floody_wards.remove(ward_id)
-            self.set_floody_wards(floody_wards)
-            self.update_relief_demand()
-            self.upazila.remove_floody_union(self.id)
-        
-
     def update_relief_demand(self):
-        
-        floody_wards = self.get_floody_wards()
-
-        self.dry_food_demand = Ward.objects.filter(id__in=floody_wards).aggregate(Sum('dry_food_demand'))['dry_food_demand__sum'] or 0
-
-        self.primary_food_demand = Ward.objects.filter(id__in=floody_wards).aggregate(Sum('primary_food_demand'))['primary_food_demand__sum'] or 0
-
-        self.dry_food_supply = Ward.objects.filter(id__in=floody_wards).aggregate(Sum('dry_food_supply'))['dry_food_supply__sum'] or 0
-
-        self.primary_food_supply = Ward.objects.filter(id__in=floody_wards).aggregate(Sum('primary_food_supply'))['primary_food_supply__sum'] or 0
-
+        flooded = Ward.objects.filter(union=self, is_flood=True)
+        agg = flooded.aggregate(
+            dry_demand=Sum('dry_food_demand'),
+            primary_demand=Sum('primary_food_demand'),
+            dry_supply=Sum('dry_food_supply'),
+            primary_supply=Sum('primary_food_supply'),
+        )
+        self.dry_food_demand = agg['dry_demand'] or 0
+        self.primary_food_demand = agg['primary_demand'] or 0
+        self.dry_food_supply = agg['dry_supply'] or 0
+        self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
-
-    def get_floody_wards(self):
-        try:
-            return json.loads(self.floody_wards)
-        except json.JSONDecodeError:
-            return []
-
-    def set_floody_wards(self, ward_ids):
-        self.floody_wards = json.dumps(ward_ids)
-        self.save()
+        self.upazila.update_relief_demand()
 
 class Ward(models.Model):
     name = models.CharField(max_length=100)
@@ -288,26 +160,22 @@ class Ward(models.Model):
         else:
             self.primary_food_supply += relief
             self.primary_food_demand -= relief
-        
         self.save()
-        self.union.add_floody_ward(self.id)
+        self.union.update_relief_demand()
 
 
 
     def propagate_flood_status(self):
         if self.is_flood:
             self.relief_demand = Housh.objects.filter(ward=self).aggregate(Sum('relief_demand'))['relief_demand__sum'] or 0
-            # print(self.dry_food_demand_in_percentage)
             self.dry_food_demand = math.ceil((self.relief_demand * self.dry_food_demand_in_percentage) / 100)
             self.primary_food_demand = self.relief_demand - self.dry_food_demand
             self.save()
-            self.union.add_floody_ward(self.id)
-
+            self.union.update_relief_demand()
 
     def propagate_flood_remove_status(self):
-        """Propagate the flood remove status to all related parent entities."""
         if not self.is_flood:
-            self.union.remove_floody_ward(self.id)
+            self.union.update_relief_demand()
 
 class Housh(models.Model):
     holding_number = models.CharField(max_length=20, blank=True, null=True)
