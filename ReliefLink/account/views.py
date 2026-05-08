@@ -5,6 +5,41 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
+from django.http import HttpResponseForbidden
+from django.contrib.auth import get_user_model
+from home.models import Housh
+
+User = get_user_model()
+
+
+ROLE_HIERARCHY = {
+    'Admin': 'DivisionalCommissioner',
+    'DivisionalCommissioner': 'DeputyCommissioner',
+    'DeputyCommissioner': 'UNO',
+    'UNO': 'UnionChairman',
+    'UnionChairman': 'WardMember',
+}
+
+
+def _can_delete_target(actor, target):
+    """Return True if actor is allowed to delete target."""
+    if not actor.has_perm('home.can_remove_user'):
+        return False
+    expected_target_role = ROLE_HIERARCHY.get(actor.user_type)
+    if target.user_type != expected_target_role:
+        return False
+    # Jurisdiction check — target must be within actor's geographic scope
+    if actor.user_type == 'Admin':
+        return True
+    if actor.user_type == 'DivisionalCommissioner':
+        return target.district and target.district.division == actor.division
+    if actor.user_type == 'DeputyCommissioner':
+        return target.upazila and target.upazila.district == actor.district
+    if actor.user_type == 'UNO':
+        return target.union and target.union.upazila == actor.upazila
+    if actor.user_type == 'UnionChairman':
+        return target.ward and target.ward.union == actor.union
+    return False
 
 def login_view(request):
     if request.method == 'POST':
@@ -85,9 +120,11 @@ def updatepassword_view(request):
 @login_required
 def delete_user_view(request, user_id):
     if request.method == 'POST':
-        user = get_object_or_404(User, id=user_id)
-        user.delete()
-        messages.success(request, f"User '{user.name}' has been successfully deleted.")
+        target = get_object_or_404(User, id=user_id)
+        if not _can_delete_target(request.user, target):
+            return HttpResponseForbidden("You are not allowed to delete this user.")
+        target.delete()
+        messages.success(request, f"User '{target.name}' has been successfully deleted.")
     return redirect('dashboard')
 
 @login_required
@@ -195,6 +232,8 @@ def add_house_view(request):
 def delete_house_view(request, house_id):
     if request.method == 'POST':
         house = get_object_or_404(Housh, id=house_id)
+        if request.user.user_type != 'WardMember' or house.ward != request.user.ward:
+            return HttpResponseForbidden("You are not allowed to delete this house.")
         house.delete()
         messages.success(request, f"House '{house.holding_number}' has been successfully deleted.")
     return redirect('dashboard')
