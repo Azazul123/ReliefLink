@@ -326,7 +326,7 @@ class CustomUser(AbstractUser):
 
 @receiver(post_save, sender=CustomUser)
 def handle_new_user(sender, instance, created, **kwargs):
-    if created:
+    if created and not instance.is_superuser:
         raw_password = PasswordUtility.generate_password()
         instance.set_password(raw_password)
         instance.save(update_fields=['password'])
