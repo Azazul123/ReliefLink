@@ -43,7 +43,7 @@ def contact(request):
             f"ReliefLink Team"
         )
         from_email = settings.EMAIL_HOST_USER
-        recipient_list = ['labr1t18203@gmail.com']
+        recipient_list = [settings.CONTACT_EMAIL]
 
         try:
             send_mail(subject, message_body, from_email, recipient_list)
