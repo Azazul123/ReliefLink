@@ -202,16 +202,8 @@ class House(models.Model):
     primary_food_supply = models.IntegerField(default= 0)
 
     def save(self, *args, **kwargs):
-        # Ensure relief_demand is initialized properly
-        if self.relief_demand is None:
-            self.relief_demand = self.family_member
-        self.relief_demand = self.family_member
+        self.relief_demand = self.family_member - (self.dry_food_supply + self.primary_food_supply)
 
-        # Deduct relief_supply if not None
-        if self.dry_food_supply is not None or self.primary_food_supply is not None:
-            self.relief_demand -= (self.dry_food_supply + self.primary_food_supply)
-
-        # Generate holding_number if it doesn't exist
         if not self.holding_number:
             try:
                 division_code = self.ward.union.upazila.district.division.name[:2].lower()
@@ -219,8 +211,6 @@ class House(models.Model):
                 upazila_code = self.ward.union.upazila.name[:2].lower()
                 union_code = self.ward.union.name[:2].lower()
                 ward_code = self.ward.name[:2].lower()
-
-                # Ensure correct counting
                 house_count = House.objects.filter(ward=self.ward).exclude(pk=self.pk).count() + 1
                 self.holding_number = f"{division_code}{district_code}{upazila_code}{union_code}{ward_code}{house_count}"
             except AttributeError as e:
@@ -234,8 +224,7 @@ class House(models.Model):
             self.dry_food_supply += relief
         else:
             self.primary_food_supply += relief
-        House.save(self)
-
+        self.save()
         self.ward.relief_supply(relief, relief_type)
 
 
