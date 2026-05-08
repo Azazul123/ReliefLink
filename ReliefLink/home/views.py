@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import *
+from .models import Housh
 from django.contrib.auth import get_user_model
-from .forms import *
+from .forms import ReliefSupplyForm
 from django.db.models import F
 
 

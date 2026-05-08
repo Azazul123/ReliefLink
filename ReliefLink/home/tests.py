@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import *
+from .models import PasswordUtility, Division, District, Upazila, Union, Ward, Housh
 
 class PasswordUtilityTest(TestCase):
     def test_generate_password(self):

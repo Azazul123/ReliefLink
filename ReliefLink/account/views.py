@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from .forms import *
+from .forms import (
+    LoginForm, UserCreationForm, UpdatePasswordForm,
+    AddDivisionalCommissionerForm, AddDeputyCommissionerForm,
+    AddUNOForm, AddUnionChairmanForm, AddWardMemberForm, AddHouseForm,
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import update_session_auth_hash
