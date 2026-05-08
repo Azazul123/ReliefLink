@@ -456,14 +456,14 @@ def handle_new_user(sender, instance, created, **kwargs):
     if created:
         raw_password = PasswordUtility.generate_password()
         instance.set_password(raw_password)
-        instance.save()
+        instance.save(update_fields=['password'])
         PasswordUtility.send_password_email(instance.name, instance.email, raw_password)
-        
-        # Assign permissions based on user type
-        if instance.user_type != 'Public':
-            if instance.user_type in ['Admin', 'DivisionalCommissioner', 'DeputyCommissioner', 'UNO', 'UnionChairman', 'WardMember']:
-                instance.user_permissions.add(
-                    Permission.objects.get(codename='can_add_user'),
-                    Permission.objects.get(codename='can_remove_user'),
-                )
-        instance.save()
+
+        if instance.user_type not in ['Public'] and instance.user_type in [
+            'Admin', 'DivisionalCommissioner', 'DeputyCommissioner',
+            'UNO', 'UnionChairman', 'WardMember',
+        ]:
+            instance.user_permissions.add(
+                Permission.objects.get(codename='can_add_user'),
+                Permission.objects.get(codename='can_remove_user'),
+            )
