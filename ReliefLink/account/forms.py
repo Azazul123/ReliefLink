@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
-from home.models import Division, District, Upazila, Union, Ward, Housh, PasswordUtility
+from home.models import Division, District, Upazila, Union, Ward, House, PasswordUtility
 
 User = get_user_model()
 
@@ -252,6 +252,6 @@ class AddHouseForm(forms.ModelForm):
     )
     
     class Meta:
-        model = Housh
+        model = House
         fields = ['family_member']
 

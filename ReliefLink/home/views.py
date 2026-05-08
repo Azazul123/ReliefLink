@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Housh
+from .models import House
 from django.contrib.auth import get_user_model
 from .forms import ReliefSupplyForm
 from django.db.models import F
@@ -116,7 +116,7 @@ def unionchairman_dashboard(request):
 @login_required
 def wardmember_dashboard(request):
     ward = request.user.ward
-    houses = Housh.objects.filter(ward=ward)
+    houses = House.objects.filter(ward=ward)
     
     return render(request, 'home/wardmember_dashboard.html', {'houses': houses, 'ward': ward})
 
@@ -127,7 +127,7 @@ def public_dashboard(request):
 
 
 def get_house_details(house_id):
-    house = get_object_or_404(Housh.objects.select_related(
+    house = get_object_or_404(House.objects.select_related(
         'ward__union__upazila__district__division'
     ), id=house_id)
     return {
@@ -145,7 +145,7 @@ def update_flood_status(request):
         dry_food_demand = int(request.POST.get('dry_food', 0))
 
         if ward.is_flood != is_flood and is_flood == False:
-            Housh.objects.filter(ward=ward).update(relief_demand = F('family_member'), dry_food_supply = 0, primary_food_supply = 0)
+            House.objects.filter(ward=ward).update(relief_demand = F('family_member'), dry_food_supply = 0, primary_food_supply = 0)
             ward.dry_food_supply = 0
             ward.primary_food_supply = 0
 
@@ -161,23 +161,22 @@ def update_flood_status(request):
     
 @login_required
 def relief_supply(request, house_id):
-    housh = Housh.objects.get(id=house_id)
-    # ward = housh.ward
+    house = House.objects.get(id=house_id)
     if request.method == "POST":
         form = ReliefSupplyForm(request.POST)
         if form.is_valid():
             relief_supply = form.cleaned_data['relief_supply']
             relief_type = form.cleaned_data['relief_type']
-            if(relief_supply > 0):
-                housh.ReliefSupply(relief_supply, relief_type)
+            if relief_supply > 0:
+                house.ReliefSupply(relief_supply, relief_type)
 
         return redirect('dashboard')
 
     else:
         form = ReliefSupplyForm()
-    
+
     content = {
-        'housh' : housh,
-        'form' : form
+        'house': house,
+        'form': form,
     }
     return render(request, 'home/relief_supply.html', content)

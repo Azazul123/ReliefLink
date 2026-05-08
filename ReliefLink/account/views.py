@@ -11,7 +11,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.contrib.auth import get_user_model
-from home.models import Housh
+from home.models import House
 
 User = get_user_model()
 
@@ -235,7 +235,7 @@ def add_house_view(request):
 @login_required
 def delete_house_view(request, house_id):
     if request.method == 'POST':
-        house = get_object_or_404(Housh, id=house_id)
+        house = get_object_or_404(House, id=house_id)
         if request.user.user_type != 'WardMember' or house.ward != request.user.ward:
             return HttpResponseForbidden("You are not allowed to delete this house.")
         house.delete()
@@ -245,7 +245,7 @@ def delete_house_view(request, house_id):
 @login_required
 def born_view(request, house_id):
     if request.method == 'POST':
-        house = get_object_or_404(Housh, id = house_id)
+        house = get_object_or_404(House, id = house_id)
         house.family_member += 1
         house.save()
     return redirect('dashboard')
@@ -253,7 +253,7 @@ def born_view(request, house_id):
 @login_required
 def death_view(request, house_id):
     if request.method == 'POST':
-        house = get_object_or_404(Housh, id = house_id)
+        house = get_object_or_404(House, id = house_id)
         house.family_member -= 1
         house.family_member = max(1,house.family_member)
         house.save()

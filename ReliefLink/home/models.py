@@ -167,7 +167,7 @@ class Ward(models.Model):
 
     def propagate_flood_status(self):
         if self.is_flood:
-            self.relief_demand = Housh.objects.filter(ward=self).aggregate(Sum('relief_demand'))['relief_demand__sum'] or 0
+            self.relief_demand = House.objects.filter(ward=self).aggregate(Sum('relief_demand'))['relief_demand__sum'] or 0
             self.dry_food_demand = math.ceil((self.relief_demand * self.dry_food_demand_in_percentage) / 100)
             self.primary_food_demand = self.relief_demand - self.dry_food_demand
             self.save()
@@ -177,7 +177,7 @@ class Ward(models.Model):
         if not self.is_flood:
             self.union.update_relief_demand()
 
-class Housh(models.Model):
+class House(models.Model):
     holding_number = models.CharField(max_length=20, blank=True, null=True)
     ward = models.ForeignKey(Ward, on_delete=models.CASCADE)
     family_member = models.IntegerField()
@@ -205,7 +205,7 @@ class Housh(models.Model):
                 ward_code = self.ward.name[:2].lower()
 
                 # Ensure correct counting
-                house_count = Housh.objects.filter(ward=self.ward).exclude(pk=self.pk).count() + 1
+                house_count = House.objects.filter(ward=self.ward).exclude(pk=self.pk).count() + 1
                 self.holding_number = f"{division_code}{district_code}{upazila_code}{union_code}{ward_code}{house_count}"
             except AttributeError as e:
                 logger.error(f"Holding number generation failed: {e}")
@@ -218,7 +218,7 @@ class Housh(models.Model):
             self.dry_food_supply += relief
         else:
             self.primary_food_supply += relief
-        Housh.save(self)
+        House.save(self)
 
         self.ward.relief_supply(relief, relief_type)
 

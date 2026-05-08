@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Division, District, Upazila, Union, Ward, Housh
+from .models import Division, District, Upazila, Union, Ward, House
 
 
 
@@ -11,7 +11,7 @@ admin.site.register(District)
 admin.site.register(Upazila)
 admin.site.register(Union)
 admin.site.register(Ward)
-admin.site.register(Housh)
+admin.site.register(House)
 
 CustomUser = get_user_model()
 
