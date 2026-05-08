@@ -6,11 +6,11 @@ from .forms import (
     AddUNOForm, AddUnionChairmanForm, AddWardMemberForm, AddHouseForm,
 )
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.contrib.auth import get_user_model
+from django.db.models import F
 from home.models import House
 
 User = get_user_model()
@@ -155,11 +155,13 @@ def add_user_view(request):
 
 @login_required
 def add_divisionalcommissioner_view(request):
+    if request.user.user_type != 'Admin':
+        return HttpResponseForbidden("Only Admins can add Divisional Commissioners.")
     if request.method == 'POST':
         form = AddDivisionalCommissionerForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('login')
+            return redirect('dashboard')
     else:
         form = AddDivisionalCommissionerForm()
     return render(request, 'account/addDivisionalCommissioner.html', {'form': form})
@@ -245,16 +247,18 @@ def delete_house_view(request, house_id):
 @login_required
 def born_view(request, house_id):
     if request.method == 'POST':
-        house = get_object_or_404(House, id = house_id)
-        house.family_member += 1
+        house = get_object_or_404(House, id=house_id)
+        House.objects.filter(id=house_id).update(family_member=F('family_member') + 1)
+        house.refresh_from_db()
         house.save()
     return redirect('dashboard')
 
 @login_required
 def death_view(request, house_id):
     if request.method == 'POST':
-        house = get_object_or_404(House, id = house_id)
-        house.family_member -= 1
-        house.family_member = max(1,house.family_member)
-        house.save()
+        house = get_object_or_404(House, id=house_id)
+        if house.family_member > 1:
+            House.objects.filter(id=house_id).update(family_member=F('family_member') - 1)
+            house.refresh_from_db()
+            house.save()
     return redirect('dashboard')

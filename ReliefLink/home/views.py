@@ -12,13 +12,6 @@ from django.db.models import F
 
 User = get_user_model()
 
-def can_add_user(user):
-    return user.has_perm('home.can_add_user')
-
-def can_remove_user(user):
-    return user.has_perm('home.can_remove_user')
-
-
 def index(request):
     return render(request, 'home/index.html')
 
@@ -126,17 +119,6 @@ def public_dashboard(request):
     return render(request, 'home/public_dashboard.html')
 
 
-def get_house_details(house_id):
-    house = get_object_or_404(House.objects.select_related(
-        'ward__union__upazila__district__division'
-    ), id=house_id)
-    return {
-        "holding_number": house.holding_number,
-        "ward": house.ward.name,
-        "division": house.ward.union.upazila.district.division.name,
-    }
-
-
 @login_required
 def update_flood_status(request):
     if request.method == 'POST':
@@ -161,7 +143,7 @@ def update_flood_status(request):
     
 @login_required
 def relief_supply(request, house_id):
-    house = House.objects.get(id=house_id)
+    house = get_object_or_404(House, id=house_id)
     if request.method == "POST":
         form = ReliefSupplyForm(request.POST)
         if form.is_valid():

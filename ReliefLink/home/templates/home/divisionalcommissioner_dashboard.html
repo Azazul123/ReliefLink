@@ -46,7 +46,7 @@
                         <td>{{ deputycommissioner.district.primary_food_supply }}</td>
                     {% endif %}
                     <td style="text-align: center;">
-                        <form method="post" action="{% url 'delete_user' user.id %}">
+                        <form method="post" action="{% url 'delete_user' deputycommissioner.id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">Delete</button>
                         </form>

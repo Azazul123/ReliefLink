@@ -46,7 +46,7 @@
                         <td style="padding: 8px;">{{ uno.upazila.primary_food_supply }}</td>
                     {% endif %}
                     <td style="padding: 8px; text-align: center;">
-                        <form method="post" action="{% url 'delete_user' user.id %}">
+                        <form method="post" action="{% url 'delete_user' uno.id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">Delete</button>
                         </form>
