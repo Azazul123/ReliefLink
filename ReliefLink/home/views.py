@@ -168,7 +168,7 @@ def relief_supply(request, house_id):
             relief_supply = form.cleaned_data['relief_supply']
             relief_type = form.cleaned_data['relief_type']
             if relief_supply > 0:
-                house.ReliefSupply(relief_supply, relief_type)
+                house.relief_supply(relief_supply, relief_type)
 
         return redirect('dashboard')
 

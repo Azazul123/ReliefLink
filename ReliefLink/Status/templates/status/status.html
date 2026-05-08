@@ -11,7 +11,7 @@
 <div class="status-section">
     <h2 class="status-title">Status of Flood in Division</h2>
     <div class="status-grid">
-        {% for division in floody_divisions %}
+        {% for division in flooded_divisions %}
             <div class="status-card full-width">
                 <div class="card-header">
                     <h3 class="status-card-title">
@@ -38,7 +38,7 @@
             </div>
         {% empty %}
             <div class="status-card full-width">
-                <p class="status-card-detail">No floody divisions found.</p>
+                <p class="status-card-detail">No flooded divisions found.</p>
             </div>
         {% endfor %}
     </div>

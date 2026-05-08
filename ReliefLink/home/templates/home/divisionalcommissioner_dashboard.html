@@ -24,7 +24,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>District</th>
-                {% if division.floody_districts %}
+                {% if division.has_flooded_areas %}
                     <th style="padding: 8px;">Dry Food Demand</th>
                     <th style="padding: 8px;">Primary Food Demand</th>
                     <th style="padding: 8px;">Dry Food Supply</th>
@@ -39,7 +39,7 @@
                     <td>{{ deputycommissioner.name }}</td>
                     <td>{{ deputycommissioner.email }}</td>
                     <td>{{ deputycommissioner.district }}</td>
-                    {% if division.floody_districts %}
+                    {% if division.has_flooded_areas %}
                         <td>{{ deputycommissioner.district.dry_food_demand }}</td>
                         <td>{{ deputycommissioner.district.primary_food_demand }}</td>
                         <td>{{ deputycommissioner.district.dry_food_supply }}</td>

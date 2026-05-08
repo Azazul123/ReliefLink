@@ -4,45 +4,45 @@ from home.models import Division, District, Upazila, Union, Ward, House
 
 
 def status(request):
-    floody_divisions = Division.objects.filter(
+    flooded_divisions = Division.objects.filter(
         district__upazila__union__ward__is_flood=True
     ).distinct()
-    return render(request, 'status/status.html', {'floody_divisions': floody_divisions})
+    return render(request, 'status/status.html', {'flooded_divisions': flooded_divisions})
 
 
 def district_status(request, division_id):
     division = get_object_or_404(Division, id=division_id)
-    floody_districts = District.objects.filter(
+    flooded_districts = District.objects.filter(
         division=division,
         upazila__union__ward__is_flood=True
     ).distinct()
     return render(request, 'status/district_status.html', {
         'division': division,
-        'districts': floody_districts,
+        'districts': flooded_districts,
     })
 
 
 def upazila_status(request, district_id):
     district = get_object_or_404(District, id=district_id)
-    floody_upazilas = Upazila.objects.filter(
+    flooded_upazilas = Upazila.objects.filter(
         district=district,
         union__ward__is_flood=True
     ).distinct()
     return render(request, 'status/upazila_status.html', {
         'district': district,
-        'upazilas': floody_upazilas,
+        'upazilas': flooded_upazilas,
     })
 
 
 def union_status(request, upazila_id):
     upazila = get_object_or_404(Upazila, id=upazila_id)
-    floody_unions = Union.objects.filter(
+    flooded_unions = Union.objects.filter(
         upazila=upazila,
         ward__is_flood=True
     ).distinct()
     return render(request, 'status/union_status.html', {
         'upazila': upazila,
-        'unions': floody_unions,
+        'unions': flooded_unions,
     })
 
 

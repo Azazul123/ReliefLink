@@ -57,6 +57,10 @@ class Division(models.Model):
         self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
 
+    @property
+    def has_flooded_areas(self):
+        return Ward.objects.filter(union__upazila__district__division=self, is_flood=True).exists()
+
 class District(models.Model):
     name = models.CharField(max_length=100)
     division = models.ForeignKey(Division, on_delete=models.CASCADE)
@@ -82,6 +86,10 @@ class District(models.Model):
         self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
         self.division.update_relief_demand()
+
+    @property
+    def has_flooded_areas(self):
+        return Ward.objects.filter(union__upazila__district=self, is_flood=True).exists()
 
 class Upazila(models.Model):
     name = models.CharField(max_length=100)
@@ -109,6 +117,10 @@ class Upazila(models.Model):
         self.save()
         self.district.update_relief_demand()
 
+    @property
+    def has_flooded_areas(self):
+        return Ward.objects.filter(union__upazila=self, is_flood=True).exists()
+
 class Union(models.Model):
     name = models.CharField(max_length=100)
     upazila = models.ForeignKey(Upazila, on_delete=models.CASCADE)
@@ -134,6 +146,10 @@ class Union(models.Model):
         self.primary_food_supply = agg['primary_supply'] or 0
         self.save()
         self.upazila.update_relief_demand()
+
+    @property
+    def has_flooded_areas(self):
+        return Ward.objects.filter(union=self, is_flood=True).exists()
 
 class Ward(models.Model):
     name = models.CharField(max_length=100)
@@ -213,7 +229,7 @@ class House(models.Model):
 
         super().save(*args, **kwargs)
 
-    def ReliefSupply(self, relief, relief_type):
+    def relief_supply(self, relief, relief_type):
         if relief_type == 'dry':
             self.dry_food_supply += relief
         else:

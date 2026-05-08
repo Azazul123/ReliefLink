@@ -24,7 +24,7 @@
                 <th style="padding: 8px;">Name</th>
                 <th style="padding: 8px;">Email</th>
                 <th style="padding: 8px;">Upazila</th>
-                {% if district.floody_upazilas %}
+                {% if district.has_flooded_areas %}
                     <th style="padding: 8px;">Dry Food Demand</th>
                     <th style="padding: 8px;">Primary Food Demand</th>
                     <th style="padding: 8px;">Dry Food Supply</th>
@@ -39,7 +39,7 @@
                     <td style="padding: 8px;">{{ uno.name }}</td>
                     <td style="padding: 8px;">{{ uno.email }}</td>
                     <td style="padding: 8px;">{{ uno.upazila }}</td>
-                    {% if district.floody_upazilas %}
+                    {% if district.has_flooded_areas %}
                         <td style="padding: 8px;">{{ uno.upazila.dry_food_demand }}</td>
                         <td style="padding: 8px;">{{ uno.upazila.primary_food_demand }}</td>
                         <td style="padding: 8px;">{{ uno.upazila.dry_food_supply }}</td>

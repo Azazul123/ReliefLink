@@ -24,7 +24,7 @@
                 <th style="padding: 8px;">Name</th>
                 <th style="padding: 8px;">Email</th>
                 <th style="padding: 8px;">Ward</th>
-                {% if union.floody_wards %}
+                {% if union.has_flooded_areas %}
                     <th style="padding: 8px;">Dry Food Demand</th>
                     <th style="padding: 8px;">Primary Food Demand</th>
                     <th style="padding: 8px;">Dry Food Supply</th>
@@ -39,7 +39,7 @@
                     <td style="padding: 8px;">{{ user.name }}</td>
                     <td style="padding: 8px;">{{ user.email }}</td>
                     <td style="padding: 8px;">{{ user.ward }}</td>
-                    {% if union.floody_wards %}
+                    {% if union.has_flooded_areas %}
                         <td style="padding: 8px;">{{ user.ward.dry_food_demand }}</td>
                         <td style="padding: 8px;">{{ user.ward.primary_food_demand }}</td>
 

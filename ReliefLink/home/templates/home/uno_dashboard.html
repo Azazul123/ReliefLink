@@ -24,7 +24,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Union</th>
-                {% if upazila.floody_unions %}
+                {% if upazila.has_flooded_areas %}
                     <th style="padding: 8px;">Dry Food Demand</th>
                     <th style="padding: 8px;">Primary Food Demand</th>
                     <th style="padding: 8px;">Dry Food Supply</th>
@@ -39,7 +39,7 @@
                     <td>{{ unionchairman.name }}</td>
                     <td>{{ unionchairman.email }}</td>
                     <td>{{ unionchairman.union }}</td>
-                    {% if upazila.floody_unions %}
+                    {% if upazila.has_flooded_areas %}
                         <td>{{ unionchairman.union.dry_food_demand }}</td>
                         <td>{{ unionchairman.union.primary_food_demand }}</td>
                         <td>{{ unionchairman.union.dry_food_supply }}</td>
